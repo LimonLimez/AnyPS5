@@ -38,6 +38,11 @@ bool StackHoldsOptimizer() {
         std::uintptr_t low = 0;
         std::uintptr_t high = 0;
         Bounds() {
+#ifdef __APPLE__
+            const auto self = pthread_self();
+            high = reinterpret_cast<std::uintptr_t>(pthread_get_stackaddr_np(self));
+            low = high - pthread_get_stacksize_np(self);
+#else
             pthread_attr_t attributes;
             if (pthread_getattr_np(pthread_self(), &attributes) != 0) return;
             void* base = nullptr;
@@ -47,6 +52,7 @@ bool StackHoldsOptimizer() {
                 high = low + size;
             }
             pthread_attr_destroy(&attributes);
+#endif
         }
     };
     thread_local const Bounds bounds;
