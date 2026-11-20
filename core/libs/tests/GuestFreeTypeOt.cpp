@@ -510,7 +510,7 @@ int main(int argc, char** argv) {
         Resolve(forwarded.qalloc, library, patched, "hz-J3hohXW8", "FT_QAlloc_nid_postfix");
         Resolve(forwarded.realloc, library, patched, "HVSaZbxYi2s", "FT_Realloc_nid_postfix");
         Resolve(forwarded.qrealloc, library, patched, "KVbmKCGGowg", "FT_QRealloc_nid_postfix");
-        Resolve(forwarded.getModule, dependency, patched, "swrIPzOxcmM", "FT_Get_Module_nid_postfix");
+        Resolve(forwarded.getModule, library, patched, "swrIPzOxcmM", "FT_Get_Module_nid_postfix");
         Resolve(forwarded.removeModule, library, patched, "5ipBcLYVc2k", "FT_Remove_Module_nid_postfix");
         Libraries();
         Reallocations();

@@ -45,6 +45,11 @@ int APS5_VABI FT_Done_SizeForward_nid_no_patch(FreeType::GuestSizeRec* size) {
 }
 APS5_EXPORT("-2rnxRCeHMs", FT_Done_SizeForward_nid_no_patch);
 
+void* APS5_VABI FT_Get_ModuleForward_nid_no_patch(FreeType::GuestLibrary* library, const char* moduleName) {
+    return FT_Get_Module_nid_postfix(library, moduleName);
+}
+APS5_EXPORT("swrIPzOxcmM", FT_Get_ModuleForward_nid_no_patch);
+
 int APS5_VABI FT_Get_CID_From_Glyph_IndexForward_nid_no_patch(FreeType::GuestFaceRec* face, std::uint32_t glyphIndex, std::uint32_t* cid) {
     return FT_Get_CID_From_Glyph_Index_nid_postfix(face, glyphIndex, cid);
 }
