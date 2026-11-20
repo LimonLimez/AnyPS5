@@ -55,6 +55,9 @@ endif()
 
 target_sources(libSceFreeType PRIVATE src/Glyph.cpp)
 target_link_libraries(libSceFreeType PRIVATE freetype)
+if(NOT ANYPS5_USE_SYSTEM_DEPS)
+    target_compile_definitions(libSceFreeType PRIVATE ANYPS5_FREETYPE_BUNDLED_CMAP)
+endif()
 target_sources(libSceFreeType PRIVATE src/SizeRequest.cpp)
 target_sources(libSceFreeType PRIVATE src/OutlineOrientation.cpp)
 

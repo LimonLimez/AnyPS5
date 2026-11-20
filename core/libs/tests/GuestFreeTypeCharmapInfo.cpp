@@ -69,6 +69,35 @@ static void Compare(FacePair& face, std::uint16_t language4, std::uint32_t langu
     Require(face.guest.rec.charmap == selected && face.oracle->charmap == nativeSelected);
 }
 
+static void CheckRepublishedCharmaps(FacePair& pair) {
+    GuestFace& face = pair.guest;
+    FT_Face host = face.host;
+    FT_CharMap* original = host->charmaps;
+    FT_CharMap selected = host->charmap;
+    GuestCharMapRec* first = face.rec.charmaps[0];
+    GuestCharMapRec* second = face.rec.charmaps[1];
+    FT_CharMapRec extra{host, FT_ENCODING_NONE, 42, 7};
+    FT_CharMap expanded[] = {&extra, original[1], original[0]};
+    host->charmaps = expanded;
+    host->num_charmaps = 3;
+    host->charmap = original[0];
+    SyncFace(face);
+    Require(face.rec.num_charmaps == 3 && face.rec.charmaps[1] == second && face.rec.charmaps[2] == first);
+    Require(face.rec.charmap == first && FT_Get_Charmap_Index_nid_postfix(first) == 2);
+    GuestCharMapRec* added = face.rec.charmaps[0];
+    Require(added->face == &face.rec && added->platform_id == 42 && added->encoding_id == 7);
+    host->charmaps = expanded + 1;
+    host->num_charmaps = 2;
+    SyncFace(face);
+    Require(face.rec.charmaps[0] == second && face.rec.charmaps[1] == first);
+    Require(FT_Set_Charmap_nid_postfix(&face.rec, second) == 0 && host->charmap == original[1]);
+    Require(FT_Get_Charmap_Index_nid_postfix(second) == 0);
+    host->charmaps = original;
+    host->charmap = selected;
+    SyncFace(face);
+    Require(face.rec.charmaps[0] == first && face.rec.charmaps[1] == second);
+}
+
 template <typename TCall> static bool Unsupported(TCall call) {
     try {
         call();
@@ -94,6 +123,7 @@ int main() {
             Compare(first, 0x0411, 0x80000001u);
             Compare(second, 0x0412, 0xFFFFFFFFu);
         }
+        CheckRepublishedCharmaps(first);
         GuestCharMapRec copied = *first.guest.rec.charmaps[0];
         Require(Unsupported([&] { FT_Get_Charmap_Index_nid_postfix(&copied); }));
         Require(Unsupported([&] { FT_Get_CMap_Language_ID_nid_postfix(&copied); }));

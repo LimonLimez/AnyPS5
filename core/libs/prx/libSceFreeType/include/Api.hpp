@@ -64,6 +64,7 @@ std::uint32_t* APS5_VABI FT_Face_GetVariantsOfChar_nid_postfix(FreeType::GuestFa
 std::uint32_t* APS5_VABI FT_Face_GetCharsOfVariant_nid_postfix(FreeType::GuestFaceRec* face, std::uint64_t variantSelector);
 void APS5_VABI FT_Set_Transform_nid_postfix(FreeType::GuestFaceRec* face, const FreeType::GuestMatrix* matrix, const FreeType::GuestVector* delta);
 int APS5_VABI FT_Get_Charmap_Index_nid_postfix(FreeType::GuestCharMapRec* charmap);
+void APS5_VABI FreeTypeDoneCharmap_nid_no_patch(FreeType::GuestCharMapRec* charmap);
 std::uint64_t APS5_VABI FT_Get_CMap_Language_ID_nid_postfix(FreeType::GuestCharMapRec* charmap);
 std::int64_t APS5_VABI FT_Get_CMap_Format_nid_postfix(FreeType::GuestCharMapRec* charmap);
 const char* APS5_VABI FT_Get_X11_Font_Format_nid_postfix(FreeType::GuestFaceRec* face);

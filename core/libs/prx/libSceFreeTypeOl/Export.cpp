@@ -1,6 +1,7 @@
 #include <cstddef>
 #include <cstdint>
 #include "SceTypes.hpp"
+#include "prx/libSceFreeTypeOl/libSceFreeTypeOl.hpp"
 #include "prx/libc/include/General.hpp"
 
 extern "C" {
@@ -110,10 +111,15 @@ int APS5_VABI sceFreeTypeOlAttachStream_nid_no_patch() {
 }
 APS5_EXPORT("ZqvTX8u1bEc", sceFreeTypeOlAttachStream_nid_no_patch);
 
-int APS5_VABI sceFreeTypeOlCMapDone_nid_no_patch() {
+void APS5_VABI sceFreeTypeOlCMapDone_nid_postfix(FreeType::GuestCharMapRec* charmap) {
+#if defined(ANYPS5_FREETYPEOL_SYSTEM_DEPS)
+    static_cast<void>(charmap);
     NotImplemented_nid_no_patch(__func__);
+#else
+    FreeTypeDoneCharmap_nid_no_patch(charmap);
+#endif
 }
-APS5_EXPORT("h0n4Fb9j2R8", sceFreeTypeOlCMapDone_nid_no_patch);
+APS5_EXPORT("h0n4Fb9j2R8", sceFreeTypeOlCMapDone_nid_postfix);
 
 int APS5_VABI sceFreeTypeOlCMapNew_nid_no_patch() {
     NotImplemented_nid_no_patch(__func__);

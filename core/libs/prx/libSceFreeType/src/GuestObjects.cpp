@@ -1,6 +1,7 @@
 #include "prx/libSceFreeType/include/GuestObjects.hpp"
 
 #include <cstddef>
+#include <span>
 #include <stdexcept>
 
 namespace FreeType {
@@ -11,6 +12,25 @@ GuestFace* FaceOf(const GuestFaceRec* face) {
 
 GuestFace* FaceOf(const GuestGlyphSlotRec* slot) {
     return slot ? static_cast<GuestFace*>(slot->internal) : nullptr;
+}
+
+void SyncCharmaps_nid_no_patch(GuestFace& face) {
+    const std::span maps(face.host->charmaps, static_cast<std::size_t>(face.host->num_charmaps));
+    for (FT_CharMap native : maps) face.charmaps.try_emplace(native);
+    face.charmapPointers.resize(maps.size());
+    face.rec.charmap = nullptr;
+    for (std::size_t index = 0; index < maps.size(); ++index) {
+        FT_CharMap native = maps[index];
+        auto& guest = face.charmaps.at(native);
+        guest = {&face.rec, static_cast<std::int32_t>(native->encoding), native->platform_id, native->encoding_id};
+        face.charmapPointers[index] = &guest;
+        if (native == face.host->charmap) face.rec.charmap = &guest;
+    }
+    if (face.charmaps.size() > maps.size()) {
+        std::erase_if(face.charmaps, [&](const auto& entry) { return std::ranges::find(maps, entry.first) == maps.end(); });
+    }
+    face.rec.num_charmaps = face.host->num_charmaps;
+    face.rec.charmaps = maps.empty() ? nullptr : face.charmapPointers.data();
 }
 
 void SyncFace(GuestFace& face) {
@@ -31,17 +51,7 @@ void SyncFace(GuestFace& face) {
     }
     rec.num_fixed_sizes = host->num_fixed_sizes;
     rec.available_sizes = face.fixedSizes.empty() ? nullptr : face.fixedSizes.data();
-    face.charmaps.resize(static_cast<std::size_t>(host->num_charmaps));
-    face.charmapPointers.resize(face.charmaps.size());
-    rec.charmap = nullptr;
-    for (std::size_t index = 0; index < face.charmaps.size(); ++index) {
-        const FT_CharMap charmap = host->charmaps[index];
-        face.charmaps[index] = {&rec, static_cast<std::int32_t>(charmap->encoding), charmap->platform_id, charmap->encoding_id};
-        face.charmapPointers[index] = &face.charmaps[index];
-        if (charmap == host->charmap) rec.charmap = &face.charmaps[index];
-    }
-    rec.num_charmaps = host->num_charmaps;
-    rec.charmaps = face.charmapPointers.empty() ? nullptr : face.charmapPointers.data();
+    SyncCharmaps_nid_no_patch(face);
     rec.bbox = {host->bbox.xMin, host->bbox.yMin, host->bbox.xMax, host->bbox.yMax};
     rec.units_per_EM = host->units_per_EM;
     rec.ascender = host->ascender;

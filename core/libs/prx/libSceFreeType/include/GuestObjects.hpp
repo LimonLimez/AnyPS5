@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <list>
 #include <memory>
+#include <unordered_map>
 #include <vector>
 
 namespace FreeType {
@@ -31,7 +32,8 @@ struct GuestLibrary {
     std::list<std::unique_ptr<GuestFace>> faces;
 };
 
-extern "C" void UnregisterBitmap_nid_no_patch(const GuestBitmap* bitmap);
+void UnregisterGuestFace_nid_no_patch(const GuestFace& face);
+GuestFace* RegisteredGuestFace_nid_no_patch(const GuestFaceRec* face);
 
 struct GuestSize {
     GuestSizeRec rec{};
@@ -63,13 +65,13 @@ struct GuestFace {
     std::list<GuestSize> sizes;
     std::vector<unsigned char> bytes;
     std::vector<GuestBitmapSize> fixedSizes;
-    std::vector<GuestCharMapRec> charmaps;
+    std::unordered_map<FT_CharMap, GuestCharMapRec> charmaps;
     std::vector<GuestCharMapRec*> charmapPointers;
     std::vector<GuestVector> outlinePoints;
     GuestSfntTables sfntTables{};
     std::unique_ptr<GuestStreamBridge> stream;
 
-    ~GuestFace() { UnregisterBitmap_nid_no_patch(&slot.bitmap); }
+    ~GuestFace() { UnregisterGuestFace_nid_no_patch(*this); }
 };
 
 void RegisterBitmap_nid_no_patch(GuestFace& face);
@@ -78,6 +80,7 @@ extern "C" int FreeTypeNewGlyph_nid_no_patch(GuestLibrary* library, std::uint32_
 GuestFace* FaceOf(const GuestFaceRec* face);
 GuestFace* FaceOf(const GuestGlyphSlotRec* slot);
 void SyncFace(GuestFace& face);
+void SyncCharmaps_nid_no_patch(GuestFace& face);
 void SyncSize(GuestFace& face);
 void SyncSizePointer_nid_no_patch(GuestFace& face);
 void SyncSizeRecord_nid_no_patch(GuestFace& face, GuestSizeRec& rec, FT_Size host);

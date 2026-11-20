@@ -15,13 +15,14 @@ using namespace FreeType;
 
 namespace {
 
-struct BitmapOwners {
+struct GuestOwners {
     std::mutex mutex;
     std::unordered_map<const GuestBitmap*, FT_Bitmap*> bitmaps;
+    std::unordered_map<const GuestFaceRec*, GuestFace*> faces;
 };
 
-BitmapOwners& Owners() {
-    static BitmapOwners owners;
+GuestOwners& Owners() {
+    static GuestOwners owners;
     return owners;
 }
 
@@ -53,12 +54,21 @@ void RegisterBitmap_nid_no_patch(GuestFace& face) {
     auto& owners = Owners();
     std::lock_guard lock(owners.mutex);
     owners.bitmaps.insert_or_assign(&face.slot.bitmap, face.host->glyph ? &face.host->glyph->bitmap : nullptr);
+    owners.faces.insert_or_assign(&face.rec, &face);
 }
 
-void UnregisterBitmap_nid_no_patch(const GuestBitmap* bitmap) {
+void UnregisterGuestFace_nid_no_patch(const GuestFace& face) {
     auto& owners = Owners();
     std::lock_guard lock(owners.mutex);
-    owners.bitmaps.erase(bitmap);
+    owners.bitmaps.erase(&face.slot.bitmap);
+    owners.faces.erase(&face.rec);
+}
+
+GuestFace* RegisteredGuestFace_nid_no_patch(const GuestFaceRec* face) {
+    auto& owners = Owners();
+    std::lock_guard lock(owners.mutex);
+    const auto entry = owners.faces.find(face);
+    return entry == owners.faces.end() ? nullptr : entry->second;
 }
 
 }
