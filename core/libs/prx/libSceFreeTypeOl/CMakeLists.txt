@@ -44,6 +44,20 @@ if(BUILD_TESTING)
     configure_windows_unwind(guest_freetype_outline_border_tests)
     add_custom_target(freetype_outline_border_patched DEPENDS
         ${PATCHED_DIR}/libSceFreeTypeOl.prx ${PATCHED_DIR}/libSceFreeTypeOt.prx ${PATCHED_DIR}/libSceFreeType.prx ${PATCHED_DIR}/libkernel.prx ${LIBC_PATCHED})
+    if(NOT ANYPS5_USE_SYSTEM_DEPS)
+        add_test_executable(guest_freetype_ol_cmap_export_tests NO_RUNTIME_DLL_STAGING
+            ${LIBS_INCLUDE_DIR}/tests/GuestFreeTypeOlCMapExport.cpp)
+        target_include_directories(guest_freetype_ol_cmap_export_tests PRIVATE ${LIBS_INCLUDE_DIR})
+        target_link_libraries(guest_freetype_ol_cmap_export_tests PRIVATE ${CMAKE_DL_LIBS})
+        add_dependencies(guest_freetype_ol_cmap_export_tests freetype_outline_border_patched)
+        configure_host_test_executable(guest_freetype_ol_cmap_export_tests)
+        add_test(NAME guest_freetype_ol_cmap_export COMMAND guest_freetype_ol_cmap_export_tests
+            ${PATCHED_DIR}/libSceFreeType.prx ${PATCHED_DIR}/libSceFreeTypeOl.prx)
+        if(WIN32)
+            set_tests_properties(guest_freetype_ol_cmap_export PROPERTIES ENVIRONMENT_MODIFICATION
+                "PATH=path_list_prepend:${PATCHED_DIR}")
+        endif()
+    endif()
     add_dependencies(guest_freetype_outline_border_tests freetype_outline_border_patched)
     add_test(NAME guest_freetype_outline_border_reference COMMAND guest_freetype_outline_border_tests reference)
     foreach(module IN ITEMS Ol Ot)
