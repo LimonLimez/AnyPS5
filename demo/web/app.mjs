@@ -16,6 +16,7 @@ let sink;
 let outputDirectory;
 let outputTransaction;
 let downloadUrl;
+let result;
 let logs = [];
 let release;
 const canSaveZip = typeof window.showSaveFilePicker === "function" && window.isSecureContext;
@@ -42,6 +43,21 @@ function sum(values) {
 
 function updateLocaleButton() {
   $("locale").textContent = locale.toUpperCase();
+}
+
+function renderResultInfo() {
+  if (!result) return;
+  const { apps, size, mode, release, outputName, folderName, target } = result;
+  const unit = mode === "disk" ? translate(locale, "resultUnitFiles") : "ZIP";
+  let info = apps > 1
+    ? translate(locale, "resultInfoBatch", { apps, size: bytes(size), unit, release })
+    : translate(locale, "resultInfoSingle", { size: bytes(size), unit, release, outputName });
+  if (mode === "zip") info += translate(locale, "resultZipSavedToDisk");
+  if (mode === "disk") {
+    info += translate(locale, "resultSavedIn", { name: folderName });
+    if (target === "linux") info += translate(locale, "resultLinuxChmod", { name: outputName });
+  }
+  $("result-info").textContent = info;
 }
 
 function update() {
@@ -283,20 +299,15 @@ async function onMessage({ data }, currentWorker) {
       $("done").hidden = false;
       $("status").hidden = true;
       $("cancel").hidden = true;
-      const unit = data.mode === "disk" ? translate(locale, "resultUnitFiles") : "ZIP";
-      $("result-info").textContent = data.apps > 1
-        ? translate(locale, "resultInfoBatch", { apps: data.apps, size: bytes(data.size), unit, release: data.release })
-        : translate(locale, "resultInfoSingle", { size: bytes(data.size), unit, release: data.release, outputName: data.outputName });
+      const { apps, size, mode, release, outputName } = data;
+      result = { apps, size, mode, release, outputName, folderName: outputTransaction?.name,
+        target: document.querySelector('input[name="target"]:checked').value };
+      renderResultInfo();
       if (data.blob) {
         downloadUrl = URL.createObjectURL(data.blob);
         $("download").href = downloadUrl;
         $("download").download = `${data.outputName}.zip`;
         $("download").hidden = false;
-      } else if (data.mode === "zip") {
-        $("result-info").textContent += translate(locale, "resultZipSavedToDisk");
-      } else {
-        $("result-info").textContent += translate(locale, "resultSavedIn", { name: outputTransaction.name });
-        if (document.querySelector('input[name="target"]:checked').value === "linux") $("result-info").textContent += translate(locale, "resultLinuxChmod", { name: data.outputName });
       }
       $("result-note").textContent = data.apps > 1 ? translate(locale, "resultNoteBatch") : translate(locale, "resultNoteSingle");
       $("result-note").hidden = data.mode === "disk";
@@ -324,6 +335,7 @@ async function selectInputs(inputs) {
   }
   worker?.terminate();
   if (downloadUrl) { URL.revokeObjectURL(downloadUrl); downloadUrl = null; }
+  result = null;
   selectedInputs = inputs;
   summaries = [];
   inspectionComplete = false;
@@ -359,6 +371,7 @@ $("change").onclick = () => {
   worker?.terminate();
   worker = null;
   if (downloadUrl) { URL.revokeObjectURL(downloadUrl); downloadUrl = null; }
+  result = null;
   selectedInputs = [];
   summaries = [];
   inspectionComplete = false;
@@ -450,6 +463,7 @@ $("locale").onclick = () => {
   locale = locales[(index + 1) % locales.length].code;
   setLocale(locale);
   updateLocaleButton();
+  renderResultInfo();
   update();
 };
 updateLocaleButton();

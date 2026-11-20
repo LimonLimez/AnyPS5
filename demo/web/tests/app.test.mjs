@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { setImmediate } from "node:timers/promises";
 import { test } from "node:test";
+import { locales, translate } from "../i18n.mjs";
 
 class Element {
   children = [];
@@ -367,6 +368,50 @@ test("a visible error follows a language switch", async t => {
   assert.equal(document.documentElement.dir, "ltr");
   assert.equal(get("error").children[0].textContent, "Cannot load release information (404). release.json is generated during the site build, so it is missing when serving demo/web directly.");
 });
+
+for (const [mode, apps] of [["memory", 1], ["memory", 2], ["zip", 2], ["disk", 1]]) {
+  test(`language changes update the result summary for ${mode} with ${apps} app(s)`, async t => {
+    const sink = { async close() {} };
+    const parent = {
+      async getDirectoryHandle(name, options) {
+        if (!options?.create) throw Object.assign(new Error("missing"), { name: "NotFoundError" });
+        return {};
+      }
+    };
+    const { get, workers } = await setup(t, `result-${mode}-${apps}`, {
+      showDirectoryPicker: async () => parent,
+      showSaveFilePicker: async () => ({ createWritable: async () => sink })
+    });
+    get("file").files = [{ name: "first app.zip" }, { name: "second.zip" }].slice(0, apps);
+    get("file").onchange();
+    const current = workers.at(-1);
+    await inspect(current, apps);
+    get("acknowledge").checked = true;
+    get("acknowledge").listeners.get("change")();
+    get("save").value = mode;
+    get("save").listeners.get("change")();
+    await get("convert").onclick();
+    const outputName = apps > 1 ? "anyps5-apps" : "first app.elf";
+    await current.onmessage({ data: { type: "complete", mode, apps, outputName, size: 123,
+      blob: mode === "memory" ? new Blob() : null, release: "test-release" } });
+    assert.equal(get("done").hidden, false);
+    assert.equal(get("download").hidden, mode !== "memory");
+    if (mode === "memory") assert.equal(get("download").download, `${outputName}.zip`);
+    for (let i = 0; i < locales.length; i++) {
+      get("locale").onclick();
+      const language = document.documentElement.lang;
+      const unit = mode === "disk" ? translate(language, "resultUnitFiles") : "ZIP";
+      const values = { apps, size: "123 B", unit, release: "test-release", outputName };
+      let expected = translate(language, apps > 1 ? "resultInfoBatch" : "resultInfoSingle", values);
+      if (mode === "zip") expected += translate(language, "resultZipSavedToDisk");
+      if (mode === "disk") {
+        expected += translate(language, "resultSavedIn", { name: "first app-linux" });
+        expected += translate(language, "resultLinuxChmod", { name: outputName });
+      }
+      assert.equal(get("result-info").textContent, expected);
+    }
+  });
+}
 
 test("a browser that denies direct ZIP writes explains how to continue", async t => {
   const denied = Object.assign(new Error("createWritable blocked"), { name: "NotAllowedError" });
