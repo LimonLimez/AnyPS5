@@ -347,6 +347,21 @@ for (const stage of ["picker", "writable"]) {
   });
 }
 
+for (const [windowsBytes, linuxBytes, valid] of [
+  [0, 512 * 1024 * 1024, true],
+  [-1, 1024, false],
+  [1024, 512 * 1024 * 1024 + 1, false]
+]) {
+  test(`release preflight checks expanded library sizes ${windowsBytes}, ${linuxBytes}`, async t => {
+    const platforms = { windows: { expandedBytes: windowsBytes }, linux: { expandedBytes: linuxBytes } };
+    const { get } = await setup(t, `release-sizes-${windowsBytes}-${linuxBytes}`, {
+      fetch: async () => ({ ok: true, json: async () => ({ tag: "v1-test", platforms }) })
+    });
+    assert.equal(get("error").hidden, valid);
+    if (!valid) assert.equal(get("error").children[0].textContent, "Invalid release information");
+  });
+}
+
 test("a visible error follows a language switch", async t => {
   const { get } = await setup(t, "locale-error", { fetch: async () => ({ ok: false, status: 404 }) });
   assert.equal(get("error").hidden, false);

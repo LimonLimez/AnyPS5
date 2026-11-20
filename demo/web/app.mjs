@@ -1,5 +1,5 @@
 import { abortAndDiscardOutput, OutputDirectoryTransaction } from "./output-directory.mjs";
-import { batchMemoryEstimate } from "./batch.mjs";
+import { batchMemoryEstimate, validExpandedLibrarySize } from "./batch.mjs";
 import { failureReport } from "./failure-report.mjs";
 import { apply, current, locales, set as setLocale, translate } from "./i18n.mjs";
 
@@ -456,7 +456,8 @@ updateLocaleButton();
 update();
 lock(false);
 if (supported) fetch("./release.json", { cache: "no-cache" }).then(response => { if (!response.ok) throw localizedError(() => translate(locale, "cannotLoadReleaseInfo", { status: response.status, hint: response.status === 404 ? translate(locale, "cannotLoadReleaseInfoHint") : "" })); return response.json(); }).then(value => {
-  if (!value || typeof value !== "object" || typeof value.tag !== "string" || !/^v[0-9A-Za-z][0-9A-Za-z._-]*$/u.test(value.tag) || value.tag.endsWith(".") || !["windows", "linux"].every(target => Number.isSafeInteger(value.platforms?.[target]?.expandedBytes))) throw localizedError(() => translate(locale, "invalidReleaseInfo"));
+  if (!value || typeof value !== "object" || typeof value.tag !== "string" || !/^v[0-9A-Za-z][0-9A-Za-z._-]*$/u.test(value.tag) || value.tag.endsWith(".")
+      || !["windows", "linux"].every(target => validExpandedLibrarySize(value.platforms?.[target]?.expandedBytes))) throw localizedError(() => translate(locale, "invalidReleaseInfo"));
   release = value;
   update();
 }).catch(error => fail(error instanceof TypeError ? () => translate(locale, "cannotReachReleaseInfo") : error));

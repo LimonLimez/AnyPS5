@@ -1,4 +1,4 @@
-import { batchMemoryEstimate, batchOutputDirectory, MEMORY_LIMIT } from "./batch.mjs";
+import { batchMemoryEstimate, batchOutputDirectory, MEMORY_LIMIT, validExpandedLibrarySize } from "./batch.mjs";
 import { Archive, CONVERSION_LIMIT, createPackageWriter, packageArchive } from "./archive.mjs";
 import { translate } from "./i18n.mjs";
 
@@ -42,7 +42,7 @@ export async function downloadLibraries(target, locale = "en") {
       || !asset || typeof asset.sha256 !== "string" || !/^[a-f0-9]{64}$/u.test(asset.sha256)
       || asset.path !== `libraries/${target}-${asset.sha256}.zip`
       || !Number.isSafeInteger(asset.size) || asset.size <= 0 || asset.size > 512 * 1024 * 1024
-      || !Number.isSafeInteger(asset.expandedBytes) || asset.expandedBytes < 0 || asset.expandedBytes > 512 * 1024 * 1024) throw new Error(translate(locale, "invalidReleaseManifest"));
+      || !validExpandedLibrarySize(asset.expandedBytes)) throw new Error(translate(locale, "invalidReleaseManifest"));
   const latestResponse = await fetch("https://api.github.com/repos/boykopovar/AnyPS5/releases/latest", { headers: { Accept: "application/vnd.github+json" } });
   if (!latestResponse.ok) {
     const rateLimited = latestResponse.status === 429 || (latestResponse.status === 403 && latestResponse.headers.get("x-ratelimit-remaining") === "0");

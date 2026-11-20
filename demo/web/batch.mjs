@@ -2,6 +2,10 @@ import { translate } from "./i18n.mjs";
 
 export const MEMORY_LIMIT = 256 * 1024 * 1024;
 
+export function validExpandedLibrarySize(bytes) {
+  return Number.isSafeInteger(bytes) && bytes >= 0 && bytes <= 512 * 1024 * 1024;
+}
+
 function safeSize(value, locale) {
   if (!Number.isSafeInteger(value) || value < 0) throw new Error(translate(locale, "unsupportedFileSize"));
   return value;

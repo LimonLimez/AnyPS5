@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import vm from "node:vm";
 import { webcrypto } from "node:crypto";
+import * as batch from "../batch.mjs";
 import { translate } from "../i18n.mjs";
 
 const bytes = new Uint8Array([1, 2, 3]);
@@ -21,7 +22,7 @@ async function load(release, options = {}) {
     } });
   const module = new vm.SourceTextModule(readFileSync(new URL("../worker.mjs", import.meta.url), "utf8"), { context });
   await module.link(async name => {
-    const exports = name === "./batch.mjs" ? { batchMemoryEstimate() {}, batchOutputDirectory() {}, MEMORY_LIMIT: 0 }
+    const exports = name === "./batch.mjs" ? batch
       : name === "./i18n.mjs" ? { translate }
       : { Archive: class {}, CONVERSION_LIMIT: 0, createPackageWriter() {}, packageArchive() {} };
     return new vm.SyntheticModule(Object.keys(exports), function() { for (const [key, value] of Object.entries(exports)) this.setExport(key, value); }, { context });
