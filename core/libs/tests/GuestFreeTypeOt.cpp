@@ -90,6 +90,7 @@ struct ForwardedExports {
     decltype(&FT_QAlloc_nid_postfix) qalloc;
     decltype(&FT_Realloc_nid_postfix) realloc;
     decltype(&FT_QRealloc_nid_postfix) qrealloc;
+    decltype(&FT_Get_Renderer_nid_postfix) getRenderer;
     decltype(&FT_Get_Module_nid_postfix) getModule;
     decltype(&FT_Remove_Module_nid_postfix) removeModule;
 };
@@ -154,7 +155,10 @@ void Libraries() {
     Require(renderer != nullptr && nativeRenderer != nullptr, "find the smooth renderer");
     Require(ot.setRenderer(library, renderer, 0, nullptr) == FT_Set_Renderer(native, nativeRenderer, 0, nullptr),
             "select the smooth renderer");
-    Require(FT_Get_Renderer(native, FT_GLYPH_FORMAT_OUTLINE) == nativeRenderer, "native renderer selected");
+    Require(forwarded.getRenderer(library, FT_GLYPH_FORMAT_OUTLINE) == renderer &&
+            FT_Get_Renderer(native, FT_GLYPH_FORMAT_OUTLINE) == nativeRenderer, "selected outline renderer");
+    Require(forwarded.getRenderer(library, FT_GLYPH_FORMAT_NONE) == nullptr, "no renderer for empty format");
+    Require(forwarded.getRenderer(nullptr, FT_GLYPH_FORMAT_OUTLINE) == nullptr, "lookup without library");
     Require(ot.setRenderer(library, nullptr, 0, nullptr) == FT_Set_Renderer(native, nullptr, 0, nullptr),
             "reject a missing renderer");
     for (FreeType::GuestLibrary* queried : {library, static_cast<FreeType::GuestLibrary*>(nullptr)}) {
@@ -507,6 +511,7 @@ int main(int argc, char** argv) {
         Resolve(forwarded.qalloc, library, patched, "hz-J3hohXW8", "FT_QAlloc_nid_postfix");
         Resolve(forwarded.realloc, library, patched, "HVSaZbxYi2s", "FT_Realloc_nid_postfix");
         Resolve(forwarded.qrealloc, library, patched, "KVbmKCGGowg", "FT_QRealloc_nid_postfix");
+        Resolve(forwarded.getRenderer, library, patched, "1wFNGIk3FR0", "FT_Get_Renderer_nid_postfix");
         Resolve(forwarded.getModule, library, patched, "swrIPzOxcmM", "FT_Get_Module_nid_postfix");
         Resolve(forwarded.removeModule, library, patched, "5ipBcLYVc2k", "FT_Remove_Module_nid_postfix");
         Libraries();
