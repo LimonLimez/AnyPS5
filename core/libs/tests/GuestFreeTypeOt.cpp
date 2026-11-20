@@ -481,16 +481,13 @@ int main(int argc, char** argv) {
             "outline bitmap without library");
 #ifdef _WIN32
     const bool forwards = patched;
-    void* dependency = GetModuleHandleA("libSceFreeType.prx");
 #else
     const bool forwards = true;
-    void* dependency = library;
 #endif
     Resolve(ot.setRenderer, library, patched, "Yu9oXRVmTTo", "sceFreeTypeOtSetRenderer_nid_no_patch");
     Require(ot.setRenderer(nullptr, nullptr, 0, nullptr) == FT_Set_Renderer(nullptr, nullptr, 0, nullptr),
             "reject a missing library");
     if (forwards) {
-        Require(dependency != nullptr, "locate libSceFreeType");
         Resolve(forwarded.init, library, patched, "GNsiLzm4SH8", "FT_Init_FreeType_nid_postfix");
         Resolve(forwarded.finish, library, patched, "dH02CpEEcYk", "FT_Done_FreeType_nid_postfix");
         Resolve(forwarded.version, library, patched, "5qqbXOGlHw4", "FT_Library_Version_nid_postfix");
@@ -499,9 +496,9 @@ int main(int argc, char** argv) {
         Resolve(forwarded.pixelSizes, library, patched, "lJxMIwj81SQ", "FT_Set_Pixel_Sizes_nid_postfix");
         Resolve(forwarded.load, library, patched, "M156RuYoUbU", "FT_Load_Glyph_nid_postfix");
         Resolve(forwarded.hasGlyphNames, library, patched, "x8y0qzLiYOU", "FT_Has_PS_Glyph_Names_nid_postfix");
-        Resolve(forwarded.getGlyph, dependency, patched, "eMKHL+Cj50k", "FT_Get_Glyph_nid_postfix");
+        Resolve(forwarded.getGlyph, library, patched, "eMKHL+Cj50k", "FT_Get_Glyph_nid_postfix");
         Resolve(forwarded.copyGlyph, library, patched, "Dr3F3qrSQ2c", "FT_Glyph_Copy_nid_postfix");
-        Resolve(forwarded.doneGlyph, dependency, patched, "RdrrejUMiJ0", "FT_Done_Glyph_nid_postfix");
+        Resolve(forwarded.doneGlyph, library, patched, "RdrrejUMiJ0", "FT_Done_Glyph_nid_postfix");
         Resolve(forwarded.outlineNew, library, patched, "QH2emcgeFck", "FT_Outline_New_nid_postfix");
         Resolve(forwarded.outlineDone, library, patched, "BqGJsJcFYaM", "FT_Outline_Done_nid_postfix");
         Resolve(forwarded.render, library, patched, "9km02mPqPJE", "FT_Outline_Render_nid_postfix");

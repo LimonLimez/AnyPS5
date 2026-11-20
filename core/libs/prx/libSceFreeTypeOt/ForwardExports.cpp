@@ -40,6 +40,11 @@ int APS5_VABI FT_Done_FreeTypeForward_nid_no_patch(FreeType::GuestLibrary* libra
 }
 APS5_EXPORT("dH02CpEEcYk", FT_Done_FreeTypeForward_nid_no_patch);
 
+void APS5_VABI FT_Done_GlyphForward_nid_no_patch(FreeType::GuestGlyphRec* glyph) {
+    FT_Done_Glyph_nid_postfix(glyph);
+}
+APS5_EXPORT("RdrrejUMiJ0", FT_Done_GlyphForward_nid_no_patch);
+
 int APS5_VABI FT_Done_SizeForward_nid_no_patch(FreeType::GuestSizeRec* size) {
     return FT_Done_Size_nid_postfix(size);
 }
@@ -99,6 +104,11 @@ int APS5_VABI FT_Get_GaspForward_nid_no_patch(FreeType::GuestFaceRec* face, std:
     return FT_Get_Gasp_nid_postfix(face, ppem);
 }
 APS5_EXPORT("l4azYkX86Ds", FT_Get_GaspForward_nid_no_patch);
+
+int APS5_VABI FT_Get_GlyphForward_nid_no_patch(FreeType::GuestGlyphSlotRec* slot, FreeType::GuestGlyphRec** target) {
+    return FT_Get_Glyph_nid_postfix(slot, target);
+}
+APS5_EXPORT("eMKHL+Cj50k", FT_Get_GlyphForward_nid_no_patch);
 
 int APS5_VABI FT_Get_Glyph_NameForward_nid_no_patch(FreeType::GuestFaceRec* face, std::uint32_t glyphIndex, void* buffer, std::uint32_t bufferSize) {
     return FT_Get_Glyph_Name_nid_postfix(face, glyphIndex, buffer, bufferSize);
